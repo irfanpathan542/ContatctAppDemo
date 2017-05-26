@@ -9,18 +9,21 @@
 import UIKit
 import ContactsUI
 
-class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSource , CNContactPickerDelegate {
+
+class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSource , CNContactPickerDelegate, fetchAllContactsDelegate {
     
     @IBOutlet var tblContact: UITableView!
-    var arrContacts : NSMutableArray?
+    var arrContacts : [CNContact]?
     var contactStore = CNContactStore()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        tblContact.delegate = self
-        tblContact.dataSource = self
         
         fetchAllContacts()
+        
+        NotificationCenter.default.addObserver(forName: NSNotification.Name.init("NewContanctAdded"), object: nil, queue: OperationQueue.main) { (notification) in
+            self.fetchAllContacts()
+        }
 
         // Do any additional setup after loading the view, typically from a nib.
     }
@@ -30,6 +33,7 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
         // Dispose of any resources that can be recreated.
     }
     func fetchAllContacts(){
+        
         let contacts: [CNContact] = {
             let contactStore = CNContactStore()
             let keysToFetch = [
@@ -56,15 +60,20 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
                 do {
                     let containerResults = try contactStore.unifiedContacts(matching: fetchPredicate, keysToFetch: keysToFetch as! [CNKeyDescriptor])
                     results.append(contentsOf: containerResults)
-                    arrContacts?.add(results)
+                    
                 } catch {
                     print("Error fetching results for container")
                 }
             }
-            
             return results
         }()
+
+        arrContacts = contacts
+        
         print(contacts)
+       
+        tblContact.delegate = self
+        tblContact.dataSource = self
         self.tblContact.reloadData()
     }
     
@@ -79,14 +88,13 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
                 (contact, stop) in
                 // Array containing all unified contacts from everywhere
                 contacts.append(contact)
-                print(contacts)
-                self.arrContacts?.add(contacts)
-                
-            }
+             
+                          }
         }
         catch {
             print("unable to fetch contacts")
         }
+        arrContacts = contacts
         
         self.tblContact.reloadData()
     }
@@ -120,8 +128,8 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
     //MARK:- TableView Methods 
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
-        if let contact = arrContacts?.count {
+        print("arrcontact count \(String(describing: arrContacts?.count))")
+        if let contact = arrContacts?.count, contact > 0 {
             return contact
         }
         return 0
@@ -129,9 +137,26 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "CustomTableViewCell", for: indexPath) as! CustomTableViewCell
-        cell.nameLabel.text = arrContacts?[indexPath.row] as? String
         
-        return cell
+        if arrContacts != nil && arrContacts!.count > indexPath.row{
+            let contact = arrContacts![indexPath.row]
+            
+            cell.firstName.text = contact.givenName
+            cell.lastName.text = contact.familyName
+            cell.contactNumber.text = "\(contact.phoneNumbers[0].value.stringValue)"
+            cell.emailAddress.text = contact.emailAddresses[0].value as String
+            
+        }
+               return cell
+    }
+    
+    
+    //MARK:- Segue
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.destination.isKind(of: AddContactViewController.self) == true {
+           let addController = segue.destination as! AddContactViewController
+            addController.myParent = self
+        }
     }
 
 }

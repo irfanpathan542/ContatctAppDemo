@@ -7,9 +7,14 @@
 //
 
 import UIKit
+import Contacts
+
+protocol fetchAllContactsDelegate {
+    func fetchAllContacts()
+}
 
 class AddContactViewController: UIViewController , UIImagePickerControllerDelegate,
-UINavigationControllerDelegate {
+UINavigationControllerDelegate ,UITextFieldDelegate{
    
     @IBOutlet var myImageView: UIImageView!
     @IBOutlet var nameField: UITextField!
@@ -17,9 +22,12 @@ UINavigationControllerDelegate {
     @IBOutlet var contactField: UITextField!
     @IBOutlet var secondNameField: UITextField!
     
+    var myParent: fetchAllContactsDelegate?
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
+    
         nameField.placeholder = "Enter First Name"
         secondNameField.placeholder = "Enter Second Name"
         contactField.placeholder = "Enter Contact Number"
@@ -72,13 +80,78 @@ UINavigationControllerDelegate {
         picker.dismiss(animated: true, completion: nil)
     }
     
-    
+    func createCNContactWithFirstName(_ firstName: String, lastName: String, email: String?, phone: String?, image: UIImage?){
+        if #available(iOS 9.0, *) {
+            let store = CNContactStore()
+            let newContact = CNMutableContact()
+            
+            newContact.givenName = firstName
+            newContact.familyName = lastName
+          
+       
+            // email
+            if email != nil {
+                let contactEmail = CNLabeledValue(label: CNLabelHome, value: email! as NSString)
+                newContact.emailAddresses = [contactEmail]
+            }
+            // phone
+            if phone != nil {
+                let contactPhone = CNLabeledValue(label: CNLabelHome, value: CNPhoneNumber(stringValue: phone!))
+                newContact.phoneNumbers = [contactPhone]
+            }
+            
+            // image
+            if image != nil {
+                newContact.imageData = UIImageJPEGRepresentation(image!, 0.9)
+            }
+            
+            do {
+                let newContactRequest = CNSaveRequest()
+                newContactRequest.add(newContact, toContainerWithIdentifier: nil)
+                try CNContactStore().execute(newContactRequest)
+                
+                NotificationCenter.default.post(name: NSNotification.Name.init("NewContanctAdded"), object: nil)
+                
+                myParent?.fetchAllContacts()
+                self.navigationController?.popViewController(animated: true)
+                //self.presentingViewController?.dismiss(animated: true, completion: nil)
+            } catch {
+               
+            }
+
+           
+//            let controller = CNContactViewController(forUnknownContact : contact)// .viewControllerForUnknownContact(contact)
+//            controller.contactStore = store
+//            controller.delegate = self
+//            self.navigationController?.setNavigationBarHidden(false, animated: true)
+//            self.navigationController!.pushViewController(controller, animated: true)
+        }
+
+    }
     
     
     
     //MARK:- ADD Action UIBarButton
     @IBAction func addPressed(_ sender: UIButton) {
-        
+        if (nameField.text != "" && secondNameField.text != "") && (emailField.text != "" && contactField.text != ""){
+        self.createCNContactWithFirstName(nameField.text!, lastName: secondNameField.text!, email: emailField.text, phone: contactField.text, image:myImageView.image )
+        }
+        }
+    
+    
+    
+    
+    
+    
+    //MARK:- TEXT Field Delegate ResignFirst Risponder
+       func textFieldShouldClear(_ textField: UITextField) -> Bool
+    {
+        return true
+    }
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool
+    {
+        textField.resignFirstResponder()
+        return true
         
     }
     

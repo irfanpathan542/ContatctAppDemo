@@ -10,9 +10,12 @@ import UIKit
 
 class CustomTableViewCell: UITableViewCell {
     
+    @IBOutlet var emailAddress: UILabel!
+    @IBOutlet var lastName: UILabel!
+    @IBOutlet var firstName: UILabel!
+    @IBOutlet var myImageView: UIImageView!
+    @IBOutlet var contactNumber: UILabel!
     
-
-    @IBOutlet var nameLabel: UILabel!
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code

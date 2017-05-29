@@ -15,7 +15,7 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
     @IBOutlet var tblContact: UITableView!
     var arrContacts : [CNContact]?
     var contactStore = CNContactStore()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -24,10 +24,10 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
         NotificationCenter.default.addObserver(forName: NSNotification.Name.init("NewContanctAdded"), object: nil, queue: OperationQueue.main) { (notification) in
             self.fetchAllContacts()
         }
-
+        
         // Do any additional setup after loading the view, typically from a nib.
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -67,11 +67,11 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
             }
             return results
         }()
-
+        
         arrContacts = contacts
         
         print(contacts)
-       
+        
         tblContact.delegate = self
         tblContact.dataSource = self
         self.tblContact.reloadData()
@@ -88,8 +88,8 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
                 (contact, stop) in
                 // Array containing all unified contacts from everywhere
                 contacts.append(contact)
-             
-                          }
+                
+            }
         }
         catch {
             print("unable to fetch contacts")
@@ -125,7 +125,7 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
             completionHandler(false)
         }
     }
-    //MARK:- TableView Methods 
+    //MARK:- TableView Methods
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         print("arrcontact count \(String(describing: arrContacts?.count))")
@@ -145,19 +145,41 @@ class ViewController: UIViewController, UITableViewDelegate ,UITableViewDataSour
             cell.lastName.text = contact.familyName
             cell.contactNumber.text = "\(contact.phoneNumbers[0].value.stringValue)"
             cell.emailAddress.text = contact.emailAddresses[0].value as String
+            if (contact.imageDataAvailable) {
+                cell.myImageView.image = UIImage(data: contact.thumbnailImageData!)
+            }else {
+                print("No image Found")
+            }
+            
+            
             
         }
-               return cell
+        return cell
     }
     
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        // Enables editing only for the selected table view, if you have multiple table views
+        return true
+    }
     
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            // Inserting new item to the table
+            
+            if arrContacts != nil && arrContacts!.count > indexPath.row{
+                let contact = arrContacts![indexPath.row]
+                contact
+            }
+            
+        }
+    }
     //MARK:- Segue
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.destination.isKind(of: AddContactViewController.self) == true {
-           let addController = segue.destination as! AddContactViewController
+            let addController = segue.destination as! AddContactViewController
             addController.myParent = self
         }
     }
-
+    
 }
 

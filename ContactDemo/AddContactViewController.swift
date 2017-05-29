@@ -139,10 +139,6 @@ UINavigationControllerDelegate ,UITextFieldDelegate{
         }
     
     
-    
-    
-    
-    
     //MARK:- TEXT Field Delegate ResignFirst Risponder
        func textFieldShouldClear(_ textField: UITextField) -> Bool
     {
